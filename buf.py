@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import pygame
 
@@ -24,31 +25,49 @@ def load_image(name, color_key=-1):
 if __name__ == '__main__':
     # инициализация Pygame:
     pygame.init()
-    size = width, height = (500,) * 2
-    pygame.display.set_caption("Свой курсор мыши")
+    size = width, height = (300,) * 2
+    pygame.display.set_caption("Герой двигается!")
     screen = pygame.display.set_mode(size)
-    screen.fill((0, 0, 0))
+    screen.fill(pygame.Color("white"))
 
     fps = 60  # количество кадров в секунду
     clock = pygame.time.Clock()
     running = True
-    mouse_coords = [None,] * 2
 
-    image = load_image("arrow.png")
+    class Sprite(pygame.sprite.Sprite):
+        image = load_image("creature.png")
+
+        def __init__(self, *group):
+            super().__init__(*group)
+            self.image = Sprite.image
+            self.rect = self.image.get_rect()
+            self.rect.x = 0
+            self.rect.y = 0
+
+        def update(self, *args):
+            if args and args[0].type == pygame.KEYUP:
+                if args[0].key == pygame.K_LEFT:
+                    self.rect.x -= 10
+                elif args[0].key == pygame.K_RIGHT:
+                    self.rect.x += 10
+                elif args[0].key == pygame.K_DOWN:
+                    self.rect.y += 10
+                elif args[0].key == pygame.K_UP:
+                    self.rect.y -= 10
+
+    all_sprites = pygame.sprite.Group()
+    Sprite(all_sprites)
+    all_sprites.draw(screen)
 
     while running:  # главный игровой цикл
-        screen.fill(pygame.Color("black"))
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEMOTION:
-                mouse_coords = event.pos
+            if event.type == pygame.KEYUP:
+                all_sprites.update(event)
 
-        if mouse_coords[0] and pygame.mouse.get_focused():
-            pygame.mouse.set_visible(False)
-            screen.blit(image, tuple(mouse_coords))
-
+        screen.fill(pygame.Color("white"))
+        all_sprites.draw(screen)
         pygame.display.flip()  # смена кадра
         # временная задержка
         clock.tick(fps)
